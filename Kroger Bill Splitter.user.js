@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Kroger Bill Splitter
-// @namespace    http://devblog.trevorkonya.com
-// @version      0.1
+// @namespace    http://trevorkonya.com
+// @version      0.2
 // @description  Help split grocery bills on Kroger.com
 // @author       Trevor Konya
 // @match        https://www.kroger.com/mypurchases*
 // @grant        none
 // ==/UserScript==
 
-console.log('running Kroger Bill Splitter 0.1 ...');
+console.log('running Kroger Bill Splitter 0.2 ...');
 
 //setTimeout(function() {
 //    var receiptElements = document.getElementsByClassName('ReceiptList-receiptDateLink');
@@ -18,10 +18,11 @@ console.log('running Kroger Bill Splitter 0.1 ...');
 //    }
 //}, 1000);
 
-window.appendSliders = function() {
+function appendSliders() {
     console.log('maybe appending sliders');
 
-    var lineItems = document.getElementsByClassName('ReceiptDetail-rowContainer');
+    var lineItems = document.querySelector("div[role='rowgroup']").childNodes;
+    console.log('found ' + lineItems.length + ' line items');
 
     if (lineItems.length < 1) {
         return 0;
@@ -30,8 +31,7 @@ window.appendSliders = function() {
         return 0;
     }
 
-    var pricesPaid = document.getElementsByClassName('ReceiptDetail-itemPricePaid');
-    console.log('found ' + lineItems.length + ' line items');
+    var pricesPaid = document.getElementsByClassName('PurchasedItemRow-itemPricePaid');
 
     for (var i = 0; i < lineItems.length; i++) {
         console.log('building slider for line item ' + i);
@@ -39,13 +39,13 @@ window.appendSliders = function() {
         var slider = document.createElement('div');
         var priceSplit = splitItemPrice(50, itemPrice);
         slider.innerHTML = '<fieldset style="margin-left: 500px;">' +
-                           '<span class="leftPrice" id="slider' + i+ 'LeftDollar" style="padding-right:2em; width:40px; display:inline-block;">$' + Number(priceSplit.left).toFixed(2) + '</span>' +
+                           '<span class="leftPrice" id="slider' + i+ 'LeftDollar" style="padding-right:2em; width:40px; display:inline-block; cursor:pointer;" onclick="updateSliderValues(0, ' + i + ', ' + itemPrice + ');">$' + Number(priceSplit.left).toFixed(2) + '</span>' +
                            '<output for="slider' + i + '" id="slider' + i + 'Left" style="padding-right:2em; width:25px; display:inline-block; cursor:pointer;" onclick="updateSliderValues(0, ' + i + ', ' + itemPrice + ');">50%</output>' +
                            '<input type="range" min="0" max="100" value="50" step="5" id="slider' + i + '" oninput="updateSliderValues(value, ' + i + ', ' + itemPrice + ');"></input>' +
                            '<output for="slider' + i + '" id="slider' + i + 'Right" style="padding-left:2em; width:25px; display:inline-block; cursor:pointer;" onclick="updateSliderValues(100, ' + i + ', ' + itemPrice + ');">50%</output>' +
-                           '<span class="rightPrice" id="slider' + i+ 'RightDollar" style="padding-left:2em; width:40px; display:inline-block;">$' + Number(priceSplit.right).toFixed(2) + '</span>' +
+                           '<span class="rightPrice" id="slider' + i+ 'RightDollar" style="padding-left:2em; width:40px; display:inline-block; cursor:pointer;" onclick="updateSliderValues(100, ' + i + ', ' + itemPrice + ');">$' + Number(priceSplit.right).toFixed(2) + '</span>' +
                            '</fieldset>';
-        lineItems[i].parentNode.insertBefore(slider, lineItems[i].nextSibling);
+        lineItems[i].insertBefore(slider, lineItems[i].querySelector('div.DigitalReceipt-lightLine'));
     }
 
     // append to the end
@@ -58,8 +58,8 @@ window.appendSliders = function() {
     getTotals();
 
     // clear the interval timer so we don't keep trying to put sliders on forever
-    clearInterval(sliderInterval);
-    sliderInterval = null;
+    // clearInterval(sliderInterval);
+    // sliderInterval = null;
 
     // turn the interval back on if we go back to the purchases list
     var listButton = document.getElementsByClassName('DigitalReceipt-expandoButton')[0];
@@ -68,7 +68,7 @@ window.appendSliders = function() {
     return lineItems.length > 0;
 }
 
-window.getTotals = function() {
+function getTotals() {
     var leftPrices = document.getElementsByClassName('leftPrice');
     var rightPrices = document.getElementsByClassName('rightPrice');
     var leftTotal = 0;
@@ -106,7 +106,7 @@ window.getTotals = function() {
     document.querySelector('#rightTotal').innerText = 'Right Total: $' + Number(rightTotal).toFixed(2);
 };
 
-window.splitItemPrice = function(rightPercent, itemPrice) {
+function splitItemPrice(rightPercent, itemPrice) {
     console.log('-------------------------');
     var perfectLeftPrice = itemPrice * ((100 - rightPercent) / 100);
     var perfectRightPrice = itemPrice * (rightPercent / 100);
@@ -167,6 +167,10 @@ window.updateSliderValues = function(sliderValue, sliderNumber, itemPrice) {
 // }, 1000);
 //};
 
-window.sliderInterval = setInterval(function() {
+//window.sliderInterval = setInterval(function() {
+//    appendSliders();
+//}, 2000);
+
+setTimeout(function() {
     appendSliders();
-}, 1000);
+}, 2000);
